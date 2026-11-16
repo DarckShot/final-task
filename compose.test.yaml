@@ -1,0 +1,12 @@
+# Isolated test override: ephemeral loopback ports, local CA, separate project volumes.
+services:
+  db:
+    ports: !override ["127.0.0.1:0:5432"]
+  app:
+    ports: !override ["127.0.0.1:0:3000"]
+  caddy:
+    ports: !override ["127.0.0.1:0:443"]
+    volumes: !override
+      - ./deploy/Caddyfile.test:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config

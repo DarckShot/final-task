@@ -10,7 +10,10 @@
     "test:integration": "node --env-file-if-exists=.env --test test/integration/*.test.js",
     "test:ui": "node --env-file-if-exists=.env scripts/test-ui.js",
     "test:roles": "node --env-file-if-exists=.env scripts/test-roles.js",
-    "check:deployment": "node --env-file-if-exists=.env scripts/check-deployment.js"
+    "check:deployment": "node --env-file-if-exists=.env scripts/check-deployment.js",
+    "check:database": "node --env-file-if-exists=.env scripts/check-database.js",
+    "init:env": "node scripts/init-env.js",
+    "test:stack": "node scripts/test-stack.js"
   },
   "dependencies": {"express": "^5.1.0", "pg": "^8.16.3", "helmet": "^8.1.0"},
   "devDependencies": {"@playwright/test": "^1.56.1"}

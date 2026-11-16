@@ -10,8 +10,8 @@
 
 Выбран личный сервер с PostgreSQL и Caddy. Это позволяет управлять сроком
 доступности, сертификатом HTTPS и отдельными ограниченными учётными записями.
-База хранится в постоянном Docker volume. Публичное развёртывание владелец
-выполняет самостоятельно; рабочий HTTPS-адрес следует добавить после проверки.
+База хранится в постоянном Docker volume. Сервер появится позднее; публичное
+развёртывание владелец выполнит по инструкции, затем добавит проверенный HTTPS-адрес.
 Наличие работающего приложения в интернете пока не заявляется. Анализ альтернатив
 приведён ниже; подробности сетевой проверки доступны в [анализе размещения](docs/hosting.md).
 
@@ -56,18 +56,17 @@ loopback сервера. Пароли, рабочие токены и строк
 
 | Вариант, проверка 17.11.2026 | Оплата, ограничения и результат | Официальные источники |
 |---|---|---|
-| Timeweb Cloud, PostgreSQL | Отечественный платный DBaaS; диск/соединения зависят от конфигурации. Постоянный бесплатный тариф не подтверждён. Сайт доступен, кластер не приобретался. | [Сервис](https://timeweb.cloud/services/postgresql), [документация](https://timeweb.cloud/docs/dbaas/postgresql) |
-| Supabase, PostgreSQL | Free: 500 МБ БД, 2 активных проекта, пауза после недели неактивности; это бесплатный тариф, не грант. IPv6 напрямую или IPv4 pooler. Сайт доступен, SQL-вход не проверен без проекта. | [Тарифы](https://supabase.com/pricing), [подключение](https://supabase.com/docs/guides/database/connecting-to-postgres) |
-| Helios, PostgreSQL | Учебный доступ без оплаты студентом при наличии аккаунта. Квоты и право выделить роль требуют проверки. TCP 2222/5432 доступен; личный вход и подключение приложения не подтверждены. | [Материалы факультета, с. 15](https://se.ifmo.ru/documents/10180/1708895/prog2-04-24-se.pdf/3da4d8d1-d231-8759-a2a4-b29d9ae4de8c?t=1711605699123) |
+| Timeweb Cloud, PostgreSQL | Отечественный платный DBaaS; Free не подтверждён. Минимум: 1 CPU, 1 ГБ RAM, 8 ГБ NVMe, только 1 БД/пользователь — отдельный логин преподавателя требует другой конфигурации/согласования. Документированный default max_connections=200, фактическое значение проверяется в кластере. Сайт доступен, кластер не покупался. | [Конфигурации](https://timeweb.cloud/docs/dbaas/dbaas-create), [пользователи](https://timeweb.cloud/docs/dbaas/postgresql/users-and-privileges), [соединения](https://timeweb.cloud/docs/dbaas/postgresql/parameters) |
+| Supabase, PostgreSQL | Постоянный Free, не грант: 500 МБ БД, 2 активных проекта, возможна пауза после недели низкой активности. Nano: 60 соединений БД, 200 клиентов pooler; IPv6 напрямую или IPv4 session pooler. Документация доступна, SQL-вход без проекта не проверялся. | [Тарифы](https://supabase.com/pricing), [лимиты](https://supabase.com/docs/guides/platform/compute-and-disk), [подключение](https://supabase.com/docs/guides/database/connecting-to-postgres) |
+| Helios, PostgreSQL 18.3 | Личный SSH/SQL-вход и транспорт PostgreSQL через туннель проверены. Учебный доступ; домашняя квота 1 ГиБ не является квотой БД. Общий max_connections=512, rolconnlimit=-1, нет CREATE ROLE/DB; таблицы разрешены в личной схеме. Новую роль выдаёт администратор; GRANT существующей отдельной роли требует согласования. | [Материалы факультета, с. 15](https://se.ifmo.ru/documents/10180/1708895/prog2-04-24-se.pdf/3da4d8d1-d231-8759-a2a4-b29d9ae4de8c?t=1711605699123), [результаты проверки](docs/hosting.md) |
 
 ```sh
 npm ci
-cp .env.example .env
-# Заполните конфигурацию и создайте отдельную tasks_db в PostgreSQL.
-npm run db:init
-npm run db:roles
-# DATABASE_URL должен использовать созданную роль tasks_app.
-npm start
+npm run init:env -- --domain tasks.example.org --email student@example.org
+# Укажите реальный домен/email; .env создаётся без перезаписи существующего.
+docker compose up -d db
+docker compose run --rm setup
+docker compose up -d --build app caddy
 ```
 
 ```sh
@@ -76,4 +75,8 @@ npm test
 npm run test:integration
 npm run test:roles
 npm run test:ui
+npm run test:stack
+# После развёртывания и ручного создания персонального дела:
+APP_URL=https://ВАШ_ДОМЕН npm run check:deployment
+APP_URL=https://ВАШ_ДОМЕН npm run check:database
 ```

@@ -23,7 +23,7 @@
       </section>
       <section class="card" aria-labelledby="list-title">
         <div class="list-heading"><h2 id="list-title">Список дел</h2><button id="refresh" class="secondary">Обновить</button></div>
-        <form id="filter-form"><label for="run-id">Группа (runId)</label><div class="filter"><input id="run-id" value="manual" required pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" aria-describedby="run-hint"><button type="submit" class="secondary">Показать</button></div><p class="hint" id="run-hint">Буквы A–Z, цифры, дефис и подчёркивание. Новые дела добавляются в открытую группу.</p></form>
+        <form id="filter-form"><label for="run-id">Группа (runId)</label><div class="filter"><input id="run-id" value="manual" required pattern="[A-Za-z0-9_\-]{1,64}" maxlength="64" aria-describedby="run-hint"><button type="submit" class="secondary">Показать</button></div><p class="hint" id="run-hint">Буквы A–Z, цифры, дефис и подчёркивание. Новые дела добавляются в открытую группу.</p></form>
         <p id="count"></p><p id="empty" hidden>Здесь пока спокойно. Добавьте первое дело выше.</p><ul id="tasks"></ul>
       </section>
     </section>

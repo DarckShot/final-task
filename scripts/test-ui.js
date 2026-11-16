@@ -36,6 +36,10 @@ try {
   await expect(page.locator('#empty')).toBeVisible();
   await page.getByRole('button',{name:'Добавить итоговую работу',exact:true}).click();
   await expect(page.locator('.task-title')).toHaveText(`Итоговая работа 24.10.2026: ${config.login}`);
+  await page.getByLabel('Группа (runId)',{exact:true}).fill('недопустимая группа');
+  expect(await page.locator('#run-id').evaluate(input=>input.checkValidity())).toBe(false);
+  await page.getByLabel('Группа (runId)',{exact:true}).fill('valid-group_1');
+  expect(await page.locator('#run-id').evaluate(input=>input.checkValidity())).toBe(true);
   await page.getByLabel('Группа (runId)',{exact:true}).fill('other'); await page.getByRole('button',{name:'Показать',exact:true}).click();
   await expect(page.locator('#empty')).toBeVisible();
   await page.setViewportSize({width:375,height:812});
