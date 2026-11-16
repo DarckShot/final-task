@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tasks_db
+      POSTGRES_USER: tasks_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks_owner -d tasks_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  setup:
+    profiles: [tools]
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ADMIN_DATABASE_URL: postgresql://tasks_owner:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/tasks_db
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD}
+      REVIEWER_DB_PASSWORD: ${REVIEWER_DB_PASSWORD:?Set REVIEWER_DB_PASSWORD}
+    command: ["sh", "-c", "node scripts/migrate.js && node scripts/roles.js"]
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      AUTHOR_LOGIN: ${AUTHOR_LOGIN:?Set AUTHOR_LOGIN}
+      AUTHOR_FULL_NAME: ${AUTHOR_FULL_NAME:?Set AUTHOR_FULL_NAME}
+      API_TOKEN: ${API_TOKEN:?Set API_TOKEN}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
+      PORT: 3000
+    ports:
+      - "127.0.0.1:3000:3000"
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+volumes:
+  pgdata:
+  caddydata:
+  caddyconfig:

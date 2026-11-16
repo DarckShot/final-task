@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Мои дела · Итоговая работа</title>
+  <link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Перейти к содержимому</a>
+  <main id="main" class="shell">
+    <header><p class="eyebrow">Итоговая работа · 24.10.2026</p><h1>Мои дела<span aria-hidden="true">.</span></h1><p>Освободите голову. Начните с одного дела.</p></header>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <section id="login-panel" class="card" aria-labelledby="login-title">
+      <h2 id="login-title">Войти в список</h2><p>Введите токен доступа, полученный у автора.</p>
+      <form id="login-form"><label for="token">Токен доступа</label><input id="token" type="password" autocomplete="off" required spellcheck="false"><button type="submit">Войти</button></form>
+      <p class="hint">Токен хранится только в памяти этой вкладки. После обновления страницы потребуется войти снова.</p>
+    </section>
+    <section id="workspace" hidden aria-label="Список дел">
+      <div class="identity card"><div><p class="eyebrow">Ваш список</p><p id="author"></p></div><button id="logout" class="secondary">Выйти</button></div>
+      <section class="card" aria-labelledby="add-title"><h2 id="add-title">Что нужно сделать?</h2>
+        <form id="add-form"><label for="title">Название дела</label><input id="title" required placeholder="Например, подготовиться к защите" aria-describedby="title-hint"><p id="title-hint" class="hint">От 1 до 200 символов без пробелов по краям.</p><button type="submit">Добавить дело</button></form>
+        <button id="personal-task" class="secondary">Добавить итоговую работу</button>
+      </section>
+      <section class="card" aria-labelledby="list-title">
+        <div class="list-heading"><h2 id="list-title">Список дел</h2><button id="refresh" class="secondary">Обновить</button></div>
+        <form id="filter-form"><label for="run-id">Группа (runId)</label><div class="filter"><input id="run-id" value="manual" required pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" aria-describedby="run-hint"><button type="submit" class="secondary">Показать</button></div><p class="hint" id="run-hint">Буквы A–Z, цифры, дефис и подчёркивание. Новые дела добавляются в открытую группу.</p></form>
+        <p id="count"></p><p id="empty" hidden>Здесь пока спокойно. Добавьте первое дело выше.</p><ul id="tasks"></ul>
+      </section>
+    </section>
+    <footer>Список дел · Express + PostgreSQL</footer>
+  </main>
+  <dialog id="edit-dialog" aria-labelledby="edit-heading"><form id="edit-form"><h2 id="edit-heading">Изменить название</h2><label for="edit-title">Название дела</label><input id="edit-title" required><div class="actions"><button type="submit">Сохранить</button><button id="cancel-edit" type="button" class="secondary">Отмена</button></div><p id="edit-error" role="alert"></p></form></dialog>
+</body>
+</html>

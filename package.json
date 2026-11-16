@@ -1,0 +1,17 @@
+{
+  "name": "final-task", "version": "1.0.0", "private": true, "type": "module",
+  "engines": {"node": ">=22.17.0"},
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "dev": "node --env-file-if-exists=.env --watch src/server.js",
+    "db:init": "node --env-file-if-exists=.env scripts/migrate.js",
+    "db:roles": "node --env-file-if-exists=.env scripts/roles.js",
+    "test": "node --test test/*.test.js",
+    "test:integration": "node --env-file-if-exists=.env --test test/integration/*.test.js",
+    "test:ui": "node --env-file-if-exists=.env scripts/test-ui.js",
+    "test:roles": "node --env-file-if-exists=.env scripts/test-roles.js",
+    "check:deployment": "node --env-file-if-exists=.env scripts/check-deployment.js"
+  },
+  "dependencies": {"express": "^5.1.0", "pg": "^8.16.3", "helmet": "^8.1.0"},
+  "devDependencies": {"@playwright/test": "^1.56.1"}
+}
