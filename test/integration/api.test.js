@@ -32,6 +32,11 @@ test('public login and author with token',async () => {
   const login=await request('/login/','GET',undefined,null); assert.equal(login.status,200); assert.equal(login.body,config.login); assert.match(login.res.headers.get('content-type'),/^text\/plain/);
   assert.deepEqual((await request('/api/author/')).body,{login:config.login,fullName:config.fullName});
 });
+test('API responses remain 200 JSON even with conditional request headers',async()=>{
+  const first=await request('/api/author/');
+  const response=await fetch(base+'/api/author/',{headers:{Authorization:`Bearer ${config.token}`,'If-None-Match':first.res.headers.get('etag') || '"old-author"'}});
+  assert.equal(response.status,200);assert.deepEqual(await response.json(),first.body);
+});
 test('all API methods and unknown API paths require Bearer',async () => {
   for (const [path,method] of [['/api/author/','GET'],['/api/tasks/','POST'],['/api/tasks/?runId=x','GET'],[`/api/tasks/${randomUUID()}/`,'GET'],['/api/tasks/bad/','PATCH'],['/api/tasks/bad/','DELETE'],['/api/unknown','GET'],['/api','GET']]) {
     for (const token of [null,'wrong']) assert.equal((await request(path,method,undefined,token)).status,401);
@@ -59,6 +64,38 @@ test('PATCH persists title, done=true and done=false; validation',async () => {
   assert.equal((await request(path,'PATCH',{title:'renamed',done:true})).status,200);
   const {rows}=await pool.query('SELECT title,done FROM tasks WHERE id=$1',[task.id]); assert.deepEqual(rows[0],{title:'renamed',done:true});
   assert.equal((await request(path,'PATCH',{done:false})).body.done,false);
+});
+test('invalid text encoding is rejected as client input, not a database outage',async()=>{
+  for(const title of ['a\u0000b','\ud800','\udc00']) {
+    assert.equal((await request('/api/tasks/','POST',{title,runId})).status,400);
+    assert.equal((await request(`/api/tasks/${task.id}/`,'PATCH',{title})).status,400);
+  }
+});
+test('SQL-looking titles remain literal data and concurrent partial updates preserve both fields',async()=>{
+  const title="'); DROP TABLE tasks; --";
+  const created=await request('/api/tasks/','POST',{title,runId});assert.equal(created.status,201);
+  const id=created.body.id;
+  try {
+    assert.equal((await pool.query('SELECT title FROM public.tasks WHERE id=$1',[id])).rows[0].title,title);
+    const updates=await Promise.all([request(`/api/tasks/${id}/`,'PATCH',{title:'concurrent'}),request(`/api/tasks/${id}/`,'PATCH',{done:true})]);
+    updates.forEach(response=>assert.equal(response.status,200));
+    const stored=(await request(`/api/tasks/${id}/`)).body;assert.equal(stored.title,'concurrent');assert.equal(stored.done,true);
+  } finally {await pool.query('DELETE FROM public.tasks WHERE id=$1',[id]);}
+});
+test('the application always uses the declared public.tasks table regardless of search_path',async()=>{
+  const schema=`audit_${randomUUID().replaceAll('-','')}`;
+  const client=await pool.connect();const id=randomUUID();
+  try {
+    await client.query(`CREATE SCHEMA ${schema}`);
+    await client.query(`CREATE TABLE ${schema}.tasks (LIKE public.tasks INCLUDING ALL)`);
+    await client.query(`SET search_path TO ${schema},public`);
+    await taskStore(client,config.login).create(id,'declared table',runId);
+    assert.equal((await pool.query('SELECT id FROM public.tasks WHERE id=$1',[id])).rowCount,1);
+  } finally {
+    await client.query('RESET search_path');
+    await client.query('DELETE FROM public.tasks WHERE id=$1',[id]);
+    await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);client.release();
+  }
 });
 test('independent SQL update/insert are visible through API without cache',async () => {
   await pool.query('UPDATE tasks SET title=$1,done=true WHERE id=$2',['sql changed',task.id]);
@@ -113,4 +150,12 @@ test('unavailable real database returns JSON 503 for every task operation',async
       const result=await request(path,method,body); assert.equal(result.status,503); assert.deepEqual(result.body,{error:'Database unavailable'});
     }
   } finally {await stop(); await offline.end(); await start();}
+});
+test('unexpected programming failures are not reported as database outages',async()=>{
+  await stop();
+  try {
+    await start({list:async()=>{throw new TypeError('Synthetic programming error');}});
+    const result=await request('/api/tasks/?runId=valid');
+    assert.equal(result.status,500);assert.deepEqual(result.body,{error:'Internal server error'});
+  } finally {await stop();await start();}
 });

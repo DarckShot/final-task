@@ -8,7 +8,7 @@
     "db:roles": "node --env-file-if-exists=.env scripts/roles.js",
     "test": "node --test test/*.test.js",
     "test:integration": "node --env-file-if-exists=.env --test test/integration/*.test.js",
-    "test:ui": "node --env-file-if-exists=.env scripts/test-ui.js",
+    "test:ui": "node --env-file-if-exists=.env scripts/test-ui.js && node --env-file-if-exists=.env scripts/test-ui-regressions.js",
     "test:roles": "node --env-file-if-exists=.env scripts/test-roles.js",
     "check:deployment": "node --env-file-if-exists=.env scripts/check-deployment.js",
     "check:database": "node --env-file-if-exists=.env scripts/check-database.js",

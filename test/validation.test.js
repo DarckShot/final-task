@@ -24,3 +24,17 @@ test('UUID syntax and startup configuration',() => {
   assert.throws(() => readConfig({}));
   assert.throws(() => readConfig({AUTHOR_LOGIN:'x',AUTHOR_FULL_NAME:'x',API_TOKEN:'short',DATABASE_URL:'x'}));
 });
+test('title rejects NUL and malformed Unicode before reaching PostgreSQL',()=>{
+  for(const title of ['a\u0000b','\ud800','\udc00']) {
+    assert.throws(()=>validateBody({title,runId:'manual'}));
+    assert.throws(()=>validateBody({title},true));
+  }
+});
+test('startup rejects unusable Bearer tokens and non-PostgreSQL URLs without leaking secrets',()=>{
+  const env={AUTHOR_LOGIN:'author',AUTHOR_FULL_NAME:'Test author',API_TOKEN:'a'.repeat(32),DATABASE_URL:'postgresql://user:secret@localhost/tasks'};
+  assert.equal(readConfig(env).port,3000);
+  for(const token of ['a'.repeat(32)+' ','a'.repeat(32)+'\n','я'.repeat(32)]) assert.throws(()=>readConfig({...env,API_TOKEN:token}));
+  for(const databaseUrl of ['garbage-secret','https://user:secret@example.org/tasks']) {
+    assert.throws(()=>readConfig({...env,DATABASE_URL:databaseUrl}),error=>!error.message.includes('secret'));
+  }
+});

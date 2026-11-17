@@ -3,10 +3,12 @@ import helmet from 'helmet';
 import {randomUUID, createHash, timingSafeEqual} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {BadRequest, validUuid, validateBody, validateRunId} from './validation.js';
+import {DatabaseError} from './db.js';
 export function createApp({config, store}) {
   const app = express();
   app.disable('x-powered-by');
   app.enable('strict routing');
+  app.set('etag',false);
   app.set('query parser','simple');
   app.use(helmet());
   app.get('/login/', (_req,res) => res.type('text/plain').send(config.login));
@@ -48,8 +50,10 @@ export function createApp({config, store}) {
     if (error instanceof BadRequest || error.type === 'entity.parse.failed' || error.type === 'entity.too.large' || [400,415].includes(error.status)) {
       return res.status(400).json({error:error instanceof BadRequest ? error.message : 'Invalid JSON body'});
     }
-    console.error('Request failed:',error.code || error.name);
-    return res.status(503).json({error:'Database unavailable'});
+    console.error('Request failed:',error.cause?.code || error.code || error.name);
+    return error instanceof DatabaseError
+      ? res.status(503).json({error:'Database unavailable'})
+      : res.status(500).json({error:'Internal server error'});
   });
   return app;
 }

@@ -7,6 +7,7 @@ let busy = false;
 function notice(message, error = false) {$('#notice').textContent = message; $('#notice').classList.toggle('error',error);}
 function logout() {
   token = ''; author = undefined;
+  if ($('#edit-dialog').open) $('#edit-dialog').close();
   $('#workspace').hidden = true; $('#login-panel').hidden = false; $('#tasks').replaceChildren();
   $('#author').textContent = ''; $('#token').value = ''; $('#token').focus();
 }
@@ -34,13 +35,18 @@ function titleValue(input) {
 async function load() {
   const tasks = await api(`tasks/?runId=${encodeURIComponent(runId)}`);
   $('#tasks').replaceChildren(...tasks.map(task => {
-    const li = document.createElement('li'); li.className = `task${task.done ? ' done' : ''}`;
+    const li = document.createElement('li'); li.className = `task${task.done ? ' done' : ''}`; li.dataset.id = task.id;
     const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = task.done;
     checkbox.setAttribute('aria-label',`Выполнено: ${task.title}`);
     checkbox.addEventListener('change',() => {
       if (busy) {checkbox.checked = task.done; return;}
       action(async () => {
-        try {await api(`tasks/${task.id}/`,{method:'PATCH',body:JSON.stringify({done:checkbox.checked})}); await load(); notice('Статус сохранён.');}
+        try {
+          await api(`tasks/${task.id}/`,{method:'PATCH',body:JSON.stringify({done:checkbox.checked})});
+          await load();
+          [...$('#tasks').children].find(item => item.dataset.id === task.id)?.querySelector('input[type="checkbox"]')?.focus();
+          notice('Статус сохранён.');
+        }
         catch (error) {checkbox.checked = task.done; throw error;}
       });
     });
@@ -83,6 +89,7 @@ $('#cancel-edit').addEventListener('click',() => $('#edit-dialog').close());
 $('#edit-form').addEventListener('submit',event => {event.preventDefault(); action(async () => {
   try {
     await api(`tasks/${editingId}/`,{method:'PATCH',body:JSON.stringify({title:titleValue($('#edit-title'))})});
-    $('#edit-dialog').close(); await load(); notice('Название сохранено.'); $('#refresh').focus();
+    $('#edit-dialog').close(); await load(); notice('Название сохранено.');
+    ([...$('#tasks').children].find(item => item.dataset.id === editingId)?.querySelector('.task-actions button') || $('#refresh')).focus();
   } catch (error) {$('#edit-error').textContent=error.message; throw error;}
 });});

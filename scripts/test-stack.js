@@ -34,9 +34,13 @@ let pool;
 try {
   console.log('Starting isolated Compose stack with PostgreSQL, restricted roles and Caddy TLS…');
   await compose('up','-d','--wait','db');
+  const dbPort=(await compose('port','db','5432')).split(':').at(-1);
+  const testDatabaseUrl=`postgresql://tasks_owner:${env.POSTGRES_PASSWORD}@127.0.0.1:${dbPort}/tasks_db`;
+  await compose('run','--rm','--build','setup','node','scripts/migrate.js');
+  const rolesResult=await exec('npm',['run','test:roles'],{env:{...env,TEST_DATABASE_URL:testDatabaseUrl},maxBuffer:4*1024*1024});
+  process.stdout.write(rolesResult.stdout);
   await compose('run','--rm','--build','setup');
   await compose('up','-d','--build','app','caddy');
-  const dbPort=(await compose('port','db','5432')).split(':').at(-1);
   const httpsPort=(await compose('port','caddy','443')).split(':').at(-1);
   const origin=`https://localhost:${httpsPort}`;
   const root=join(dir,'root.crt');
@@ -53,6 +57,10 @@ try {
     await new Promise(resolve=>setTimeout(resolve,500));
   }
   const reviewerUrl=`postgresql://tasks_reviewer:${env.REVIEWER_DB_PASSWORD}@127.0.0.1:${dbPort}/tasks_db`;
+  for (const script of ['test:integration','test:ui']) {
+    const result=await exec('npm',['run',script],{env:{...env,TEST_DATABASE_URL:testDatabaseUrl},maxBuffer:4*1024*1024});
+    process.stdout.write(result.stdout);
+  }
   await exec(process.execPath,['scripts/check-database.js'],{env:{...env,APP_URL:origin,REVIEWER_DATABASE_URL:reviewerUrl,NODE_EXTRA_CA_CERTS:root},maxBuffer:1024*1024});
   pool=createPool(reviewerUrl);
   // Synthetic fixture in a disposable DB; does not replace manual work on deployment.

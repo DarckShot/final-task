@@ -14,6 +14,7 @@ export function validateBody(body, patch = false) {
     if (typeof body.title !== 'string') throw new BadRequest('title must be a string');
     result.title = body.title.trim();
     if ([...result.title].length < 1 || [...result.title].length > 200) throw new BadRequest('title must contain 1–200 characters');
+    if (/\u0000|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(result.title)) throw new BadRequest('Invalid title characters');
   }
   if (!patch) result.runId = validateRunId(body.runId);
   if (Object.hasOwn(body,'done')) {
