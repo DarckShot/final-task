@@ -13,7 +13,7 @@ export function generateEnvironment(domain, email) {
   const secret = () => randomBytes(32).toString('hex');
   const app = secret(), reviewer = secret();
   const values = {
-    AUTHOR_LOGIN: 'sergey_krasn', AUTHOR_FULL_NAME: 'Краснопольский Сергей Вячеславович',
+    AUTHOR_LOGIN: 'sergey_krasn', AUTHOR_FULL_NAME: 'Сергей Краснопольский',
     API_TOKEN: secret(), POSTGRES_PASSWORD: secret(), APP_DB_PASSWORD: app,
     REVIEWER_DB_PASSWORD: reviewer,
     DATABASE_URL: `postgresql://tasks_app:${app}@db:5432/tasks_db`,

@@ -16,7 +16,7 @@ test('generated config has independent random secrets and matching URLs',() => {
   assert.equal(new URL(env.REVIEWER_DATABASE_URL).password,env.REVIEWER_DB_PASSWORD);
   assert.equal(new URL(env.DATABASE_URL).username,'tasks_app');
   assert.equal(new URL(env.REVIEWER_DATABASE_URL).username,'tasks_reviewer');
-  assert.equal(env.AUTHOR_FULL_NAME,'Краснопольский Сергей Вячеславович');
+  assert.equal(env.AUTHOR_FULL_NAME,'Сергей Краснопольский');
   assert.notEqual(parseEnv(generateEnvironment('tasks.example.org','student@example.org')).API_TOKEN,env.API_TOKEN);
 });
 test('configuration rejects malformed domains and emails',() => {
