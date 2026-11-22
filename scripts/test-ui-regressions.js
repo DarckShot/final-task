@@ -149,7 +149,7 @@ try {
     await expect(page.locator('#tasks img')).toHaveCount(0);await expect(page.getByRole('checkbox')).toBeChecked();
   });
 } finally {
-  const report={browser:'Chrome/Chromium',date:'2026-11-17',results,passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length};
+  const report={browser:'Chrome/Chromium',date:new Date().toISOString().slice(0,10),results,passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length};
   await writeFile(new URL('../test-results/ui-audit/report.json',import.meta.url),JSON.stringify(report,null,2)+'\n');
   console.log(`SUMMARY: ${report.passed} passed; ${report.failed} failed`);
   await browser.close();await new Promise(resolve=>server.close(resolve));
