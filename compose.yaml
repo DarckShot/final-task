@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    command: ["postgres", "-c", "hba_file=/etc/postgresql/pg_hba.conf"]
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:

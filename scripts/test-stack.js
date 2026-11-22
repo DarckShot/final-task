@@ -57,6 +57,10 @@ try {
     await new Promise(resolve=>setTimeout(resolve,500));
   }
   const reviewerUrl=`postgresql://tasks_reviewer:${env.REVIEWER_DB_PASSWORD}@127.0.0.1:${dbPort}/tasks_db`;
+  const otherDbUrl=new URL(reviewerUrl);otherDbUrl.pathname='/postgres';
+  const otherDbPool=createPool(otherDbUrl.href);
+  try {await assert.rejects(otherDbPool.query('SELECT 1'),'Reviewer must not connect to another database in the same cluster');}
+  finally {await otherDbPool.end();}
   for (const script of ['test:integration','test:ui']) {
     const result=await exec('npm',['run',script],{env:{...env,TEST_DATABASE_URL:testDatabaseUrl},maxBuffer:4*1024*1024});
     process.stdout.write(result.stdout);
