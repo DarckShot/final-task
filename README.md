@@ -53,11 +53,11 @@ loopback сервера. Пароли, рабочие токены и строк
 | runId | run_id | varchar(64), A–Z/a–z/0–9/_/- |
 | createdAt | created_at | timestamptz → UTC ISO 8601 |
 
-| Вариант, проверка 17.11.2026 | Оплата, ограничения и результат | Официальные источники |
+| Вариант, проверка 17–22.11.2026 | Оплата, ограничения и результат | Официальные источники |
 |---|---|---|
 | Timeweb Cloud, PostgreSQL | Отечественный платный DBaaS; Free не подтверждён. Минимум: 1 CPU, 1 ГБ RAM, 8 ГБ NVMe, только 1 БД/пользователь — отдельный логин преподавателя требует другой конфигурации/согласования. Документированный default max_connections=200, фактическое значение проверяется в кластере. Сайт доступен, кластер не покупался. | [Конфигурации](https://timeweb.cloud/docs/dbaas/dbaas-create), [пользователи](https://timeweb.cloud/docs/dbaas/postgresql/users-and-privileges), [соединения](https://timeweb.cloud/docs/dbaas/postgresql/parameters) |
 | Supabase, PostgreSQL | Постоянный Free, не грант: 500 МБ БД, 2 активных проекта, возможна пауза после недели низкой активности. Nano: 60 соединений БД, 200 клиентов pooler; IPv6 напрямую или IPv4 session pooler. Документация доступна, SQL-вход без проекта не проверялся. | [Тарифы](https://supabase.com/pricing), [лимиты](https://supabase.com/docs/guides/platform/compute-and-disk), [подключение](https://supabase.com/docs/guides/database/connecting-to-postgres) |
-| Helios, PostgreSQL 18.3 | Личный SSH/SQL-вход и транспорт PostgreSQL через туннель проверены. Учебный доступ; домашняя квота 1 ГиБ не является квотой БД. Общий max_connections=512, rolconnlimit=-1, нет CREATE ROLE/DB; таблицы разрешены в личной схеме. Новую роль выдаёт администратор; GRANT существующей отдельной роли требует согласования. | [Материалы факультета, с. 15](https://se.ifmo.ru/documents/10180/1708895/prog2-04-24-se.pdf/3da4d8d1-d231-8759-a2a4-b29d9ae4de8c?t=1711605699123) |
+| Helios, PostgreSQL 18.3 | Учебный доступ без оплаты: личный SSH/SQL-вход и транспорт PostgreSQL через туннель проверены, поэтому подключение приложения через туннель технически возможно; само приложение на Helios не запускалось. Домашняя квота 1 ГиБ не является квотой БД; лимит хранения БД не установлен. Общий max_connections=512, rolconnlimit=-1, нет CREATE ROLE/DB; таблицы разрешены в личной схеме. Новую роль выдаёт администратор; GRANT существующей отдельной роли требует согласования. | [Материалы факультета, с. 15](https://se.ifmo.ru/documents/10180/1708895/prog2-04-24-se.pdf/3da4d8d1-d231-8759-a2a4-b29d9ae4de8c?t=1711605699123) |
 
 ```sh
 npm ci
