@@ -31,9 +31,10 @@ test('title rejects NUL and malformed Unicode before reaching PostgreSQL',()=>{
   }
 });
 test('startup rejects unusable Bearer tokens and non-PostgreSQL URLs without leaking secrets',()=>{
-  const env={AUTHOR_LOGIN:'author',AUTHOR_FULL_NAME:'Test author',API_TOKEN:'a'.repeat(32),DATABASE_URL:'postgresql://user:secret@localhost/tasks'};
+  const env={AUTHOR_LOGIN:'author',AUTHOR_FULL_NAME:'Test author',API_TOKEN:'a'.repeat(32),REVIEWER_API_TOKEN:'b'.repeat(32),DATABASE_URL:'postgresql://user:secret@localhost/tasks'};
   assert.equal(readConfig(env).port,3000);
   for(const token of ['a'.repeat(32)+' ','a'.repeat(32)+'\n','я'.repeat(32)]) assert.throws(()=>readConfig({...env,API_TOKEN:token}));
+  for(const token of ['short','b'.repeat(32)+' ','я'.repeat(32),env.API_TOKEN]) assert.throws(()=>readConfig({...env,REVIEWER_API_TOKEN:token}));
   for(const databaseUrl of ['garbage-secret','https://user:secret@example.org/tasks']) {
     assert.throws(()=>readConfig({...env,DATABASE_URL:databaseUrl}),error=>!error.message.includes('secret'));
   }

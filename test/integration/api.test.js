@@ -9,7 +9,7 @@ import {createPool,taskStore} from '../../src/db.js';
 
 if (!process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL required: use a dedicated disposable PostgreSQL database');
 const pool = createPool(process.env.TEST_DATABASE_URL);
-const config = {login:`test_${randomUUID()}`,fullName:'Тестовый автор',token:randomUUID()};
+const config = {login:`test_${randomUUID()}`,fullName:'Тестовый автор',token:randomUUID(),reviewerToken:randomUUID()};
 const runId = `test_${randomUUID()}`;
 let server,base,task;
 async function start(store=taskStore(pool,config.login)) {
@@ -31,6 +31,10 @@ after(async () => {if(server) await stop(); await pool.query('DELETE FROM tasks 
 test('public login and author with token',async () => {
   const login=await request('/login/','GET',undefined,null); assert.equal(login.status,200); assert.equal(login.body,config.login); assert.match(login.res.headers.get('content-type'),/^text\/plain/);
   assert.deepEqual((await request('/api/author/')).body,{login:config.login,fullName:config.fullName});
+});
+test('independent reviewer token grants the same task API access',async () => {
+  assert.deepEqual((await request('/api/author/','GET',undefined,config.reviewerToken)).body,{login:config.login,fullName:config.fullName});
+  assert.equal((await request('/api/author/','GET',undefined,'wrong')).status,401);
 });
 test('API responses remain 200 JSON even with conditional request headers',async()=>{
   const first=await request('/api/author/');
@@ -115,7 +119,7 @@ test('data persists across actual Node.js server process restart',async () => {
   await stop();
   let child;
   async function boot() {
-    child=spawn(process.execPath,['src/server.js'],{env:{...process.env,PORT:String(port),AUTHOR_LOGIN:config.login,AUTHOR_FULL_NAME:config.fullName,API_TOKEN:config.token,DATABASE_URL:process.env.TEST_DATABASE_URL},stdio:['ignore','pipe','pipe']});
+    child=spawn(process.execPath,['src/server.js'],{env:{...process.env,PORT:String(port),AUTHOR_LOGIN:config.login,AUTHOR_FULL_NAME:config.fullName,API_TOKEN:config.token,REVIEWER_API_TOKEN:config.reviewerToken,DATABASE_URL:process.env.TEST_DATABASE_URL},stdio:['ignore','pipe','pipe']});
     await Promise.race([
       once(child.stdout,'data'),
       once(child,'exit').then(([code]) => {throw new Error(`Child failed: ${code}`);})

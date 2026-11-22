@@ -29,7 +29,7 @@ try {
     await pool.query('DELETE FROM tasks WHERE id=$1',[id]);
     for (const sql of ['SELECT * FROM private_test','CREATE TABLE forbidden(x int)','DROP TABLE tasks','TRUNCATE tasks','CREATE ROLE forbidden_role']) await assert.rejects(pool.query(sql),error => error.code==='42501');
   }
-  const config={login:'roles-test-author',fullName:'Role verification',token:randomBytes(32).toString('hex')};
+  const config={login:'roles-test-author',fullName:'Role verification',token:randomBytes(32).toString('hex'),reviewerToken:randomBytes(32).toString('hex')};
   server=createApp({config,store:taskStore(app,config.login)}).listen(0,'127.0.0.1');
   await once(server,'listening');
   await verifyDatabase({origin:`http://127.0.0.1:${server.address().port}`,token:config.token,login:config.login,pool:reviewer});

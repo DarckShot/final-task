@@ -8,7 +8,7 @@ import {createApp} from '../src/app.js';
 if(!process.env.TEST_DATABASE_URL) throw Error('Dedicated TEST_DATABASE_URL required');
 const pool=createPool(process.env.TEST_DATABASE_URL);
 await pool.query(await readFile(new URL('../db/001_tasks.sql',import.meta.url),'utf8'));
-const config={login:`audit_${randomUUID()}`,fullName:'UI audit author',token:randomUUID()};
+const config={login:`audit_${randomUUID()}`,fullName:'UI audit author',token:randomUUID(),reviewerToken:randomUUID()};
 const server=createApp({config,store:taskStore(pool,config.login)}).listen(0,'127.0.0.1');
 await once(server,'listening');
 const origin=`http://127.0.0.1:${server.address().port}`;

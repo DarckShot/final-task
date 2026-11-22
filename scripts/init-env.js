@@ -14,7 +14,7 @@ export function generateEnvironment(domain, email) {
   const app = secret(), reviewer = secret();
   const values = {
     AUTHOR_LOGIN: 'sergey_krasn', AUTHOR_FULL_NAME: 'Сергей Краснопольский',
-    API_TOKEN: secret(), POSTGRES_PASSWORD: secret(), APP_DB_PASSWORD: app,
+    API_TOKEN: secret(), REVIEWER_API_TOKEN: secret(), POSTGRES_PASSWORD: secret(), APP_DB_PASSWORD: app,
     REVIEWER_DB_PASSWORD: reviewer,
     DATABASE_URL: `postgresql://tasks_app:${app}@db:5432/tasks_db`,
     REVIEWER_DATABASE_URL: `postgresql://tasks_reviewer:${reviewer}@127.0.0.1:5432/tasks_db`,

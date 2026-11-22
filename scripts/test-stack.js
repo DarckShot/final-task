@@ -13,7 +13,7 @@ const project=`final-task-test-${randomBytes(6).toString('hex')}`;
 const dir=await mkdtemp(join(tmpdir(),'final-task-stack-'));
 const secret=()=>randomBytes(32).toString('hex');
 const env={...process.env,POSTGRES_PASSWORD:secret(),APP_DB_PASSWORD:secret(),REVIEWER_DB_PASSWORD:secret(),
-  API_TOKEN:secret(),AUTHOR_LOGIN:'stack_test_author',AUTHOR_FULL_NAME:'Stack verification',
+  API_TOKEN:secret(),REVIEWER_API_TOKEN:secret(),AUTHOR_LOGIN:'stack_test_author',AUTHOR_FULL_NAME:'Stack verification',
   DOMAIN:'localhost',ACME_EMAIL:'test@example.org'};
 env.DATABASE_URL=`postgresql://tasks_app:${env.APP_DB_PASSWORD}@db:5432/tasks_db`;
 const args=['compose','-p',project,'-f','compose.yaml','-f','compose.test.yaml'];

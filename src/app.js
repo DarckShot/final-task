@@ -12,11 +12,13 @@ export function createApp({config, store}) {
   app.set('query parser','simple');
   app.use(helmet());
   app.get('/login/', (_req,res) => res.type('text/plain').send(config.login));
-  const expected = createHash('sha256').update(config.token).digest();
+  const expected = [config.token,config.reviewerToken].map(token=>createHash('sha256').update(token).digest());
   app.use('/api', (req,res,next) => {
     res.set('Cache-Control','no-store');
     const match = /^Bearer ([^\s]+)$/.exec(req.get('authorization') || '');
-    if (!match || !timingSafeEqual(expected,createHash('sha256').update(match[1]).digest())) {
+    const actual = match && createHash('sha256').update(match[1]).digest();
+    const authorized = actual && expected.reduce((found,hash)=>found | Number(timingSafeEqual(hash,actual)),0);
+    if (!authorized) {
       res.set('WWW-Authenticate','Bearer');
       return res.status(401).json({error:'Unauthorized'});
     }

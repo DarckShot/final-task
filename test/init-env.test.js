@@ -9,9 +9,9 @@ import {generateEnvironment} from '../scripts/init-env.js';
 
 test('generated config has independent random secrets and matching URLs',() => {
   const env=parseEnv(generateEnvironment('tasks.example.org','student@example.org'));
-  const secrets=['API_TOKEN','POSTGRES_PASSWORD','APP_DB_PASSWORD','REVIEWER_DB_PASSWORD'].map(key=>env[key]);
+  const secrets=['API_TOKEN','REVIEWER_API_TOKEN','POSTGRES_PASSWORD','APP_DB_PASSWORD','REVIEWER_DB_PASSWORD'].map(key=>env[key]);
   secrets.forEach(value => assert.match(value,/^[0-9a-f]{64}$/));
-  assert.equal(new Set(secrets).size,4);
+  assert.equal(new Set(secrets).size,5);
   assert.equal(new URL(env.DATABASE_URL).password,env.APP_DB_PASSWORD);
   assert.equal(new URL(env.REVIEWER_DATABASE_URL).password,env.REVIEWER_DB_PASSWORD);
   assert.equal(new URL(env.DATABASE_URL).username,'tasks_app');

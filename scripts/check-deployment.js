@@ -4,16 +4,18 @@ const origin=process.env.APP_URL;
 if (!origin || new URL(origin).protocol!=='https:') throw new Error('Set APP_URL to the public HTTPS origin');
 const url=new URL(origin);
 if(url.pathname!=='/' || url.username || url.password || url.search || url.hash) throw new Error('APP_URL must be an HTTPS origin without credentials, query or subpath');
-if (!process.env.API_TOKEN) throw new Error('API_TOKEN is required');
+if (!process.env.API_TOKEN || !process.env.REVIEWER_API_TOKEN) throw new Error('API_TOKEN and REVIEWER_API_TOKEN are required');
 const runId=`verify_${randomUUID()}`;
 let id;
-async function request(path,method='GET',body,auth=true) {
-  return fetch(new URL(path,origin),{method,headers:{...(auth?{Authorization:`Bearer ${process.env.API_TOKEN}`} : {}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000),redirect:'error'});
+async function request(path,method='GET',body,auth=true,token=process.env.API_TOKEN) {
+  return fetch(new URL(path,origin),{method,headers:{...(auth?{Authorization:`Bearer ${token}`} : {}),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000),redirect:'error'});
 }
 try {
   const login=await request('/login/','GET',undefined,false); assert.equal(login.status,200); assert.match(login.headers.get('content-type'),/^text\/plain/); assert.equal(await login.text(),process.env.AUTHOR_LOGIN);
   assert.equal((await request('/api/author/','GET',undefined,false)).status,401);
   const author=await request('/api/author/'); assert.equal(author.status,200); assert.deepEqual(await author.json(),{login:process.env.AUTHOR_LOGIN,fullName:process.env.AUTHOR_FULL_NAME});
+  const reviewer=await request('/api/author/','GET',undefined,true,process.env.REVIEWER_API_TOKEN);
+  assert.equal(reviewer.status,200); assert.deepEqual(await reviewer.json(),{login:process.env.AUTHOR_LOGIN,fullName:process.env.AUTHOR_FULL_NAME});
   const created=await request('/api/tasks/','POST',{title:'Deployment verification',runId}); assert.equal(created.status,201);
   const task=await created.json(); id=task.id; assert.equal(task.done,false); assert.equal(task.ownerLogin,process.env.AUTHOR_LOGIN); assert.equal(task.runId,runId);
   assert.deepEqual(Object.keys(task).sort(),['createdAt','done','id','ownerLogin','runId','title']);

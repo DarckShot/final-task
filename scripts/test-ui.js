@@ -5,7 +5,7 @@ import {createPool,taskStore} from '../src/db.js';
 import {createApp} from '../src/app.js';
 if (!process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL required (disposable PostgreSQL database)');
 const pool=createPool(process.env.TEST_DATABASE_URL);
-const config={login:`ui_${randomUUID()}`,fullName:'Проверка интерфейса',token:randomUUID()};
+const config={login:`ui_${randomUUID()}`,fullName:'Проверка интерфейса',token:randomUUID(),reviewerToken:randomUUID()};
 const server=createApp({config,store:taskStore(pool,config.login)}).listen(0,'127.0.0.1');
 await once(server,'listening');
 let browser;
@@ -46,9 +46,16 @@ try {
   if (await page.evaluate(() => document.documentElement.scrollWidth>innerWidth)) throw new Error('Horizontal overflow at 375px');
   await page.getByRole('button',{name:'Выйти',exact:true}).click(); await expect(page.locator('#login-panel')).toBeVisible();
   await expect(page.locator('#token')).toBeFocused();
+  await page.getByLabel('Токен доступа',{exact:true}).fill(config.reviewerToken);
+  await page.getByRole('button',{name:'Войти',exact:true}).click();
+  await expect(page.locator('#author')).toContainText(config.fullName);
+  await page.getByLabel('Группа (runId)',{exact:true}).fill('manual');
+  await page.getByRole('button',{name:'Показать',exact:true}).click();
+  await expect(page.locator('.task-title')).toHaveText(`Итоговая работа 24.10.2026: ${config.login}`);
+  await page.getByRole('button',{name:'Выйти',exact:true}).click();
   const storage=await page.evaluate(() => [localStorage.length,sessionStorage.length]); expect(storage).toEqual([0,0]);
   expect(errors).toEqual([]);
-  console.log('Browser PASS: login, author, XSS-safe title, rename, done/undone, SQL refresh, delete, manual task, runId, mobile, logout, in-memory token');
+  console.log('Browser PASS: owner/reviewer login, author, XSS-safe title, rename, done/undone, SQL refresh, delete, manual task, runId, mobile, logout, in-memory token');
 } finally {
   await browser?.close(); await new Promise(resolve => server.close(resolve));
   await pool.query('DELETE FROM tasks WHERE owner_login=$1',[config.login]); await pool.end();
